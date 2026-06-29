@@ -1,18 +1,24 @@
 package com.pearl.keyboard.ime
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.inputmethodservice.InputMethodService
+import android.net.Uri
 import android.os.SystemClock
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
+import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.pearl.keyboard.feature.clipboard.ClipboardHistory
 import com.pearl.keyboard.feature.clipboard.ClipboardPanelView
 import com.pearl.keyboard.feature.emoji.EmojiPanelView
@@ -354,6 +360,31 @@ class IosKeyboardService : InputMethodService(),
     override fun closePanel() {
         container.showKeyboard()
         clearSuggestions()
+    }
+
+    override fun commitMedia(uri: Uri, mimeType: String, fallbackText: String) {
+        val ic = currentInputConnection ?: return
+        finishComposing(applyAutocorrect = false)
+        val editorInfo = currentInputEditorInfo
+        val supported = editorInfo != null &&
+            EditorInfoCompat.getContentMimeTypes(editorInfo).any { ClipDescription.compareMimeTypes(mimeType, it) }
+        val committed = if (supported && editorInfo != null) {
+            val info = InputContentInfoCompat(uri, ClipDescription("GIF", arrayOf(mimeType)), null)
+            runCatching {
+                InputConnectionCompat.commitContent(
+                    ic, editorInfo, info,
+                    InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION, null
+                )
+            }.getOrDefault(false)
+        } else false
+
+        if (!committed) {
+            // Fallback: many fields don't accept inline media — copy + paste the link.
+            (getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)
+                ?.setPrimaryClip(ClipData.newPlainText("GIF", fallbackText))
+            ic.commitText(fallbackText, 1)
+            toast("GIF link inserted (this field may not support inline GIFs)")
+        }
     }
 
     // ======================================================================
