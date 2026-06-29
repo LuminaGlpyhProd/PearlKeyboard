@@ -1,0 +1,80 @@
+name: Release
+
+# Triggered when you push a version tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`).
+# Builds the app, signs the release if signing secrets are configured, and publishes a
+# GitHub Release with the APK/AAB attached for direct download.
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # required to create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      # Optional: only runs when you've added the signing secrets to the repo.
+      - name: Decode signing keystore (if configured)
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}"
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release AAB/APK + debug APK
+        run: gradle :app:bundleRelease :app:assembleRelease :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/*.apk dist/ 2>/dev/null || true
+          cp app/build/outputs/apk/release/*.apk dist/ 2>/dev/null || true
+          cp app/build/outputs/bundle/release/*.aab dist/ 2>/dev/null || true
+          ls -la dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          body: |
+            Automated build for **${{ github.ref_name }}**.
+
+            ### Artifacts
+            - `app-debug.apk` — installs immediately on any Android 10+ device (debug-signed). Best for quickly trying the keyboard.
+            - `app-release*.apk` — release build. Signed **only if** signing secrets are configured in the repo; otherwise it is unsigned (`app-release-unsigned.apk`) and must be signed before installing.
+            - `app-release.aab` — Android App Bundle for uploading to Google Play.
+
+            ### Install (APK)
+            1. Download `app-debug.apk` onto your phone.
+            2. Allow "Install unknown apps" for your browser/file manager and open it.
+            3. Launch **Pearl Keyboard**, tap **Enable in Settings**, then **Choose Keyboard**.

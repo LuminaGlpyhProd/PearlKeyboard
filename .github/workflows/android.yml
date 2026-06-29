@@ -1,0 +1,51 @@
+name: Android CI
+
+# Builds the keyboard on GitHub's runners (which have the Android SDK) on every push
+# and pull request to main, and uploads the resulting APK/AAB as workflow artifacts.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK + release AAB/APK
+        run: gradle :app:assembleDebug :app:bundleRelease :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pearl-keyboard-artifacts
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
