@@ -116,6 +116,10 @@
             app:title="@string/pref_gif_title"
             app:defaultValue="false" />
         <SwitchPreferenceCompat
+            app:key="pref_autofill"
+            app:title="@string/pref_autofill_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
             app:key="pref_auto_update"
             app:title="@string/pref_auto_update_title"
             app:defaultValue="true" />

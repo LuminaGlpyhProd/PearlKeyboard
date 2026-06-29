@@ -10,11 +10,20 @@ import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.inputmethodservice.InputMethodService
 import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.os.SystemClock
+import android.util.Size
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InlineSuggestionsRequest
+import android.view.inputmethod.InlineSuggestionsResponse
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import android.widget.inline.InlinePresentationSpec
+import androidx.annotation.RequiresApi
+import androidx.autofill.inline.UiVersions
+import androidx.autofill.inline.v1.InlineSuggestionUi
 import androidx.core.content.ContextCompat
 import androidx.core.view.inputmethod.EditorInfoCompat
 import androidx.core.view.inputmethod.InputConnectionCompat
@@ -36,6 +45,8 @@ import com.pearl.keyboard.model.LayoutId
 import com.pearl.keyboard.settings.Prefs
 import com.pearl.keyboard.settings.SettingsActivity
 import com.pearl.keyboard.theme.KeyboardTheme
+import com.pearl.keyboard.util.dpInt
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The keyboard. Everything visual lives in [KeyboardContainerView] / [KeyboardView];
@@ -137,6 +148,59 @@ class IosKeyboardService : InputMethodService(),
             composing.setLength(0)
             clearSuggestions()
         }
+    }
+
+    // ======================================================================
+    // Inline autofill / OTP suggestions (#10, Android 11+)
+    // ======================================================================
+
+    override fun onCreateInlineSuggestionsRequest(uiExtras: Bundle): InlineSuggestionsRequest? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !prefs.autofillEnabled) return null
+        // Fully guarded: if anything goes wrong we just opt out of inline suggestions.
+        return runCatching { buildInlineRequest() }.getOrNull()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun buildInlineRequest(): InlineSuggestionsRequest {
+        val styles = UiVersions.newStylesBuilder()
+            .addStyle(InlineSuggestionUi.newStyleBuilder().build())
+            .build()
+        val min = Size(100, dpInt(36f))
+        val max = Size(740, dpInt(48f))
+        val spec = InlinePresentationSpec.Builder(min, max).setStyle(styles).build()
+        return InlineSuggestionsRequest.Builder(listOf(spec))
+            .setMaxSuggestionCount(6)
+            .build()
+    }
+
+    override fun onInlineSuggestionsResponse(response: InlineSuggestionsResponse): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !::container.isInitialized) return false
+        return runCatching { showInlineSuggestions(response) }.getOrDefault(false)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun showInlineSuggestions(response: InlineSuggestionsResponse): Boolean {
+        val suggestions = response.inlineSuggestions
+        if (suggestions.isEmpty()) {
+            container.clearInline()
+            return false
+        }
+        // Each suggestion view inflates asynchronously; show them once all are ready.
+        val collected = java.util.Collections.synchronizedList(ArrayList<View>())
+        val remaining = AtomicInteger(suggestions.size)
+        val size = Size(dpInt(160f), dpInt(44f))
+        for (s in suggestions) {
+            s.inflate(this, size, mainExecutor) { view ->
+                if (view != null) collected.add(view)
+                if (remaining.decrementAndGet() == 0) container.showInline(ArrayList(collected))
+            }
+        }
+        return true
+    }
+
+    override fun onFinishInput() {
+        if (::container.isInitialized) container.clearInline()
+        super.onFinishInput()
     }
 
     override fun onDestroy() {

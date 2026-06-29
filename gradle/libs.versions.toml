@@ -10,6 +10,7 @@ lifecycle = "2.8.4"
 preference = "1.2.1"
 emoji2 = "1.5.0"
 recyclerview = "1.3.2"
+autofill = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -21,6 +22,7 @@ androidx-preference-ktx = { group = "androidx.preference", name = "preference-kt
 androidx-emoji2 = { group = "androidx.emoji2", name = "emoji2", version.ref = "emoji2" }
 androidx-emoji2-views = { group = "androidx.emoji2", name = "emoji2-views", version.ref = "emoji2" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-autofill = { group = "androidx.autofill", name = "autofill", version.ref = "autofill" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

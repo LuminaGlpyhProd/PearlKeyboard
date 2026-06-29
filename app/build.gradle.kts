@@ -17,8 +17,8 @@ android {
         applicationId = "com.pearl.keyboard"
         minSdk = 29          // Android 10
         targetSdk = 34       // Android 14
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         // Render vector drawables on all supported API levels.
         vectorDrawables { useSupportLibrary = true }
@@ -37,8 +37,11 @@ android {
 
     buildTypes {
         release {
-            // Keep false for an easy first build; flip on once you add real obfuscation rules.
-            isMinifyEnabled = false
+            // R8 shrinks/optimises the (largely AndroidX) bytecode. Our own classes are
+            // kept verbatim via proguard-rules.pro, so runtime behaviour is unchanged.
+            // Resource shrinking is left off until validated on-device.
+            isMinifyEnabled = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -81,4 +84,7 @@ dependencies {
 
     // Grids for the emoji / clipboard / GIF panels.
     implementation(libs.androidx.recyclerview)
+
+    // Inline autofill / OTP suggestion styling (#10).
+    implementation(libs.androidx.autofill)
 }

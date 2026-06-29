@@ -42,6 +42,7 @@
     <string name="pref_clipboard_title">Clipboard history</string>
     <string name="pref_voice_title">Voice typing</string>
     <string name="pref_gif_title">GIF search (requires API key)</string>
+    <string name="pref_autofill_title">Inline autofill &amp; OTP suggestions</string>
     <string name="pref_auto_update_title">Check for updates automatically</string>
     <string name="pref_check_update_title">Check for updates now</string>
 

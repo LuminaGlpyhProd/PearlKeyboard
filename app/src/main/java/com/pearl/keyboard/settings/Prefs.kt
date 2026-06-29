@@ -55,6 +55,7 @@ class Prefs(context: Context) {
     val voiceEnabled: Boolean get() = sp.getBoolean(KEY_VOICE, true)
     val gifEnabled: Boolean get() = sp.getBoolean(KEY_GIF, false)
     val autoUpdate: Boolean get() = sp.getBoolean(KEY_AUTO_UPDATE, true)
+    val autofillEnabled: Boolean get() = sp.getBoolean(KEY_AUTOFILL, true)
 
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) =
         sp.registerOnSharedPreferenceChangeListener(l)
@@ -92,5 +93,6 @@ class Prefs(context: Context) {
         const val KEY_VOICE = "pref_voice"
         const val KEY_GIF = "pref_gif"
         const val KEY_AUTO_UPDATE = "pref_auto_update"
+        const val KEY_AUTOFILL = "pref_autofill"
     }
 }
