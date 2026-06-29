@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">Pearl Keyboard</string>
+    <string name="settings_title">Pearl Keyboard Settings</string>
+    <string name="subtype_en">English</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_step1">1. Enable Pearl Keyboard in system settings</string>
+    <string name="onboarding_step2">2. Select Pearl Keyboard as your input method</string>
+    <string name="btn_enable">Enable in Settings</string>
+    <string name="btn_choose">Choose Keyboard</string>
+    <string name="btn_try">Try it here</string>
+    <string name="try_hint">Tap here and start typing…</string>
+
+    <!-- Preference categories -->
+    <string name="cat_appearance">Appearance</string>
+    <string name="cat_typing">Typing</string>
+    <string name="cat_feedback">Keypress feedback</string>
+    <string name="cat_features">Features</string>
+
+    <!-- Preference titles -->
+    <string name="pref_theme_title">Theme</string>
+    <string name="pref_key_borders_title">Key borders</string>
+    <string name="pref_key_borders_summary">Draw a subtle border around each key</string>
+    <string name="pref_keyboard_height_title">Keyboard height</string>
+    <string name="pref_popup_title">Key pop-up preview</string>
+    <string name="pref_popup_summary">Show the iOS-style character bubble on press</string>
+    <string name="pref_one_handed_title">One-handed mode</string>
+
+    <string name="pref_autocorrect_title">Auto-correction</string>
+    <string name="pref_predictions_title">Predictive text</string>
+    <string name="pref_gesture_title">Glide / swipe typing</string>
+    <string name="pref_double_space_title">Double-space inserts period</string>
+    <string name="pref_autocap_title">Auto-capitalization</string>
+
+    <string name="pref_sound_title">Sound on keypress</string>
+    <string name="pref_sound_volume_title">Keypress sound volume</string>
+    <string name="pref_haptic_title">Haptic feedback</string>
+
+    <string name="pref_clipboard_title">Clipboard history</string>
+    <string name="pref_voice_title">Voice typing</string>
+    <string name="pref_gif_title">GIF search (requires API key)</string>
+
+    <!-- Misc -->
+    <string name="clipboard_empty">Copied text shows up here</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_permission_needed">Microphone permission is required for voice typing</string>
+    <string name="action_done">done</string>
+    <string name="action_go">go</string>
+    <string name="action_search">search</string>
+    <string name="action_send">send</string>
+    <string name="action_next">next</string>
+    <string name="action_return">return</string>
+    <string name="space_label">space</string>
+</resources>

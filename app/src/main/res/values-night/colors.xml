@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bg">#000000</color>           <!-- iOS grouped background, dark -->
+    <color name="app_surface">#1C1C1E</color>
+    <color name="app_text">#FFFFFF</color>
+    <color name="app_text_secondary">#8E8E93</color>
+</resources>

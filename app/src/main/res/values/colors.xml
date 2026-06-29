@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App (settings screen) palette. The KEYBOARD palette lives in code
+         (theme/KeyboardTheme.kt) so the force-light / force-dark preference works
+         independently of the system setting. -->
+    <color name="brand">#0A84FF</color>            <!-- iOS system blue -->
+    <color name="ic_launcher_background">#0A84FF</color>
+
+    <color name="app_bg">#F2F2F7</color>           <!-- iOS grouped background, light -->
+    <color name="app_surface">#FFFFFF</color>
+    <color name="app_text">#000000</color>
+    <color name="app_text_secondary">#8E8E93</color>
+</resources>
