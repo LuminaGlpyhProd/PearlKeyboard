@@ -57,6 +57,7 @@ class KeyboardView @JvmOverloads constructor(
     // ---- configurable from preferences ------------------------------------
     var popupPreviewEnabled = true
     var gestureEnabled = true
+    var longPressDelayMs = 320L
     private var oneHanded = false
     private var oneHandedSide = OneHandedSide.RIGHT
     private var heightScale = 1f
@@ -77,6 +78,8 @@ class KeyboardView @JvmOverloads constructor(
     private val letterTextSize = context.resources.getDimension(com.pearl.keyboard.R.dimen.key_letter_text_size)
     private val specialTextSize = context.resources.getDimension(com.pearl.keyboard.R.dimen.key_special_text_size)
     private val maxContentWidth = context.dp(720f)   // cap key width on tablets
+    // Proximity radius² for touch correction: taps in gaps / just off a key still register.
+    private val proximityLimitSq = context.dp(36f).let { it * it }
     private var landscape = false
 
     // ---- computed layout --------------------------------------------------
@@ -114,10 +117,14 @@ class KeyboardView @JvmOverloads constructor(
     private var gestureMaybe = false
     private val gestureStart = PointF()
     private val gesturePoints = ArrayList<PointF>()
-    private val gesturePath = Path()
     private val gestureSlop = ViewConfiguration.get(context).scaledTouchSlop * 1.6f
 
     private var lastShiftTap = 0L
+    private var lastGesturePreview = 0L
+
+    // gesture trail fade-out
+    private var trailFadeAlpha = 0f
+    private val fadeTrailPoints = ArrayList<PointF>()
 
     // long-press alternates bookkeeping
     private var longPressId = -1
@@ -242,8 +249,30 @@ class KeyboardView @JvmOverloads constructor(
         }
     }
 
-    private fun keyAt(x: Float, y: Float): PositionedKey? =
-        positioned.firstOrNull { !it.key.isSpacer && it.rect.contains(x, y) }
+    /**
+     * Resolve a touch to a key. A direct hit wins immediately; otherwise the touch is
+     * snapped to the NEAREST key (by distance to its rectangle). This widens each
+     * key's *effective* hit area into the gaps and just past the edges without changing
+     * its drawn size — the core of Gboard-style fast-typing accuracy. Stray touches
+     * beyond [proximityLimitSq] are rejected so nothing far away gets grabbed.
+     */
+    private fun keyAt(x: Float, y: Float): PositionedKey? {
+        var nearest: PositionedKey? = null
+        var nearestDistSq = Float.MAX_VALUE
+        for (pk in positioned) {
+            if (pk.key.isSpacer) continue
+            val r = pk.rect
+            if (r.contains(x, y)) return pk
+            val dx = if (x < r.left) r.left - x else if (x > r.right) x - r.right else 0f
+            val dy = if (y < r.top) r.top - y else if (y > r.bottom) y - r.bottom else 0f
+            val dSq = dx * dx + dy * dy
+            if (dSq < nearestDistSq) {
+                nearestDistSq = dSq
+                nearest = pk
+            }
+        }
+        return if (nearestDistSq <= proximityLimitSq) nearest else null
+    }
 
     // ======================================================================
     // Drawing
@@ -255,7 +284,11 @@ class KeyboardView @JvmOverloads constructor(
             if (pk.key.isSpacer) continue
             drawKey(canvas, pk)
         }
-        if (gesturePointerId != -1 && gesturePoints.size > 1) drawGestureTrail(canvas)
+        if (gesturePointerId != -1 && gesturePoints.size > 1) {
+            drawTrail(canvas, gesturePoints, 1f)
+        } else if (trailFadeAlpha > 0f && fadeTrailPoints.size > 1) {
+            drawTrail(canvas, fadeTrailPoints, trailFadeAlpha)
+        }
     }
 
     private fun drawKey(canvas: Canvas, pk: PositionedKey) {
@@ -324,13 +357,26 @@ class KeyboardView @JvmOverloads constructor(
         canvas.drawText(label, pk.rect.centerX(), baseline, textPaint)
     }
 
-    private fun drawGestureTrail(canvas: Canvas) {
-        gesturePath.reset()
-        gesturePath.moveTo(gesturePoints[0].x, gesturePoints[0].y)
-        for (i in 1 until gesturePoints.size) gesturePath.lineTo(gesturePoints[i].x, gesturePoints[i].y)
-        trailPaint.color = theme.gestureTrail
-        trailPaint.strokeWidth = context.dp(9f)
-        canvas.drawPath(gesturePath, trailPaint)
+    /**
+     * Draw the glide trail as alpha- and width-tapered round segments: the head (most
+     * recent points) is brightest/thickest, fading toward the tail. [globalAlpha] (0..1)
+     * scales the whole thing for the post-release fade-out.
+     */
+    private fun drawTrail(canvas: Canvas, pts: List<PointF>, globalAlpha: Float) {
+        if (pts.size < 2) return
+        val base = theme.gestureTrail
+        val baseA = Color.alpha(base)
+        val r = Color.red(base); val g = Color.green(base); val b = Color.blue(base)
+        val n = pts.size
+        val wMin = context.dp(5f)
+        val wMax = context.dp(12f)
+        for (i in 1 until n) {
+            val t = i.toFloat() / (n - 1)                  // 0 = tail, 1 = head
+            val a = (baseA * globalAlpha * (0.20f + 0.80f * t)).toInt().coerceIn(0, 255)
+            trailPaint.color = Color.argb(a, r, g, b)
+            trailPaint.strokeWidth = wMin + (wMax - wMin) * t
+            canvas.drawLine(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, trailPaint)
+        }
     }
 
     // ---- vector glyphs for special keys -----------------------------------
@@ -440,7 +486,9 @@ class KeyboardView @JvmOverloads constructor(
         pointerKeys.put(id, pk)
         pressedKeys.add(pk)
         invalidate()
-        listener?.onKeyDownFeedback(pk.key.type)
+        // Delete feedback is played by the service only when something is actually
+        // deleted (see onDelete), so it stops the instant the field is empty.
+        if (pk.key.type != KeyType.DELETE) listener?.onKeyDownFeedback(pk.key.type)
 
         when (pk.key.type) {
             KeyType.DELETE -> {
@@ -468,6 +516,12 @@ class KeyboardView @JvmOverloads constructor(
 
         if (id == gesturePointerId) {
             gesturePoints.add(PointF(x, y))
+            // Throttled live prediction while swiping (Gboard-style).
+            val now = SystemClock.uptimeMillis()
+            if (now - lastGesturePreview >= GESTURE_PREVIEW_MS) {
+                lastGesturePreview = now
+                listener?.onGesturePreview(ArrayList(gesturePoints))
+            }
             invalidate()
             return
         }
@@ -554,6 +608,8 @@ class KeyboardView @JvmOverloads constructor(
         gestureCandidateId = -1
         gestureMaybe = false
         gesturePoints.clear()
+        trailFadeAlpha = 0f
+        fadeTrailPoints.clear()
         popup.dismiss()
         invalidate()
     }
@@ -619,7 +675,7 @@ class KeyboardView @JvmOverloads constructor(
         cancelLongPress(id)
         longPressId = id
         longPressKey = pk
-        handler.postDelayed(longPressRunnable, LONG_PRESS_MS)
+        handler.postDelayed(longPressRunnable, longPressDelayMs)
     }
 
     private fun cancelLongPress(id: Int) {
@@ -685,10 +741,17 @@ class KeyboardView @JvmOverloads constructor(
 
     private val deleteRunnable = object : Runnable {
         override fun run() {
+            // No feedback here — the service plays it per actual deletion and calls
+            // cancelDeleteRepeat() the moment there's nothing left to delete.
             listener?.onAction(KeyAction.Delete)
-            listener?.onKeyDownFeedback(KeyType.DELETE)
             handler.postDelayed(this, REPEAT_INTERVAL)
         }
+    }
+
+    /** Stop the backspace auto-repeat immediately (called when the field is empty). */
+    fun cancelDeleteRepeat() {
+        handler.removeCallbacks(deleteRunnable)
+        deletePointerId = -1
     }
 
     // ---- glide gesture ----------------------------------------------------
@@ -706,12 +769,33 @@ class KeyboardView @JvmOverloads constructor(
     }
 
     private fun endGesture() {
-        if (gesturePoints.size >= 2) {
-            listener?.onAction(KeyAction.GesturePath(ArrayList(gesturePoints)))
-        }
+        val pts = ArrayList(gesturePoints)
+        if (pts.size >= 2) listener?.onAction(KeyAction.GesturePath(pts))
         gesturePoints.clear()
         gesturePointerId = -1
+        if (pts.size >= 2) startTrailFade(pts)
         invalidate()
+    }
+
+    private fun startTrailFade(pts: List<PointF>) {
+        fadeTrailPoints.clear()
+        fadeTrailPoints.addAll(pts)
+        trailFadeAlpha = 1f
+        handler.removeCallbacks(trailFadeRunnable)
+        handler.post(trailFadeRunnable)
+    }
+
+    private val trailFadeRunnable = object : Runnable {
+        override fun run() {
+            trailFadeAlpha -= 0.14f
+            if (trailFadeAlpha <= 0f) {
+                trailFadeAlpha = 0f
+                fadeTrailPoints.clear()
+            } else {
+                handler.postDelayed(this, 16L)
+            }
+            invalidate()
+        }
     }
 
     // ---- misc -------------------------------------------------------------
@@ -726,6 +810,9 @@ class KeyboardView @JvmOverloads constructor(
         gestureCandidateId = -1
         gestureMaybe = false
         gesturePoints.clear()
+        trailFadeAlpha = 0f
+        fadeTrailPoints.clear()
+        handler.removeCallbacks(trailFadeRunnable)
         popup.dismiss()
     }
 
@@ -746,9 +833,9 @@ class KeyboardView @JvmOverloads constructor(
     }
 
     companion object {
-        private const val LONG_PRESS_MS = 320L
         private const val DOUBLE_TAP_MS = 300L
-        private const val REPEAT_DELAY = 400L   // before delete starts repeating
-        private const val REPEAT_INTERVAL = 55L // between repeats
+        private const val REPEAT_DELAY = 400L      // before delete starts repeating
+        private const val REPEAT_INTERVAL = 55L    // between repeats
+        private const val GESTURE_PREVIEW_MS = 90L // throttle for live swipe prediction
     }
 }

@@ -32,4 +32,6 @@ interface KeyboardListener {
     fun onAction(action: KeyAction)
     /** Fired the instant a key is touched, for low-latency haptic + sound. */
     fun onKeyDownFeedback(type: KeyType)
+    /** Throttled live prediction while the user is mid-swipe (does not commit). */
+    fun onGesturePreview(points: List<PointF>)
 }
