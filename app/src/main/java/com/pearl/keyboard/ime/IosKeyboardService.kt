@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.PointF
 import android.inputmethodservice.InputMethodService
 import android.os.SystemClock
 import android.view.View
@@ -93,11 +94,13 @@ class IosKeyboardService : InputMethodService(),
             setOneHanded(prefs.oneHanded, OneHandedSide.RIGHT)
             popupPreviewEnabled = prefs.popupPreview
             gestureEnabled = prefs.gestureTyping
+            longPressDelayMs = prefs.longPressDelay.toLong()
             setLayout(LayoutId.LETTERS)
         }
         haptic.enabled = prefs.haptics
         sound.enabled = prefs.sound
         sound.volume = prefs.soundVolume
+        sound.pack = prefs.soundPack
 
         composing.clear()
         lastAutoCorrection = null
@@ -142,6 +145,14 @@ class IosKeyboardService : InputMethodService(),
         sound.play(type)
     }
 
+    override fun onGesturePreview(points: List<PointF>) {
+        if (!prefs.gestureTyping) return
+        val centers = container.keyboardView.letterKeyCenters()
+        val word = GestureTypingDetector.decode(points, centers, dictionary) ?: return
+        // Live guess only — not committed. The strip is refreshed when the swipe ends.
+        container.strip.setSuggestions(listOf(word), 0)
+    }
+
     override fun onAction(action: KeyAction) {
         when (action) {
             is KeyAction.Char -> onChar(action.text)
@@ -178,17 +189,32 @@ class IosKeyboardService : InputMethodService(),
 
     private fun onDelete() {
         val ic = currentInputConnection ?: return
+        val deleted: Boolean
         if (composing.isNotEmpty()) {
             composing.setLength(composing.length - 1)
             if (composing.isEmpty()) ic.finishComposingText() else ic.setComposingText(composing, 1)
             updateSuggestions()
-            return
+            deleted = true
+        } else {
+            // Delete a whole code point so we don't split a surrogate pair / emoji in half.
+            val before = ic.getTextBeforeCursor(2, 0)
+            if (before.isNullOrEmpty()) {
+                deleted = false
+            } else {
+                val count = if (before.length == 2 && Character.isSurrogatePair(before[0], before[1])) 2 else 1
+                ic.deleteSurroundingText(count, 0)
+                clearSuggestions()
+                deleted = true
+            }
         }
-        // Delete a whole code point so we don't split a surrogate pair / emoji in half.
-        val before = ic.getTextBeforeCursor(2, 0)
-        val count = if (before != null && before.length == 2 && Character.isSurrogatePair(before[0], before[1])) 2 else 1
-        ic.deleteSurroundingText(count, 0)
-        clearSuggestions()
+        // Feedback ONLY when something was actually removed; otherwise stop the repeat
+        // immediately so sound/haptics don't keep firing on an empty field.
+        if (deleted) {
+            haptic.perform(KeyType.DELETE)
+            sound.play(KeyType.DELETE)
+        } else {
+            container.keyboardView.cancelDeleteRepeat()
+        }
     }
 
     private fun onSpace() {
