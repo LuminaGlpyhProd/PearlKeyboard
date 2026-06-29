@@ -31,11 +31,15 @@ class Prefs(context: Context) {
     val gestureTyping: Boolean get() = sp.getBoolean(KEY_GESTURE, true)
     val doubleSpacePeriod: Boolean get() = sp.getBoolean(KEY_DOUBLE_SPACE, true)
     val autoCap: Boolean get() = sp.getBoolean(KEY_AUTOCAP, true)
+    /** Long-press delay before the accent bar opens, in ms. */
+    val longPressDelay: Int get() = sp.getInt(KEY_LONG_PRESS, 320).coerceIn(150, 600)
 
     // Feedback
     val sound: Boolean get() = sp.getBoolean(KEY_SOUND, true)
     val soundVolume: Float get() = sp.getInt(KEY_SOUND_VOLUME, 40).coerceIn(0, 100) / 100f
     val haptics: Boolean get() = sp.getBoolean(KEY_HAPTIC, true)
+    /** Sound pack id: iphone | android | gboard | mechanical | soft | retro | silent. */
+    val soundPack: String get() = sp.getString(KEY_SOUND_PACK, "iphone") ?: "iphone"
 
     // Features
     val clipboardEnabled: Boolean get() = sp.getBoolean(KEY_CLIPBOARD, true)
@@ -60,8 +64,10 @@ class Prefs(context: Context) {
         const val KEY_GESTURE = "pref_gesture"
         const val KEY_DOUBLE_SPACE = "pref_double_space_period"
         const val KEY_AUTOCAP = "pref_autocap"
+        const val KEY_LONG_PRESS = "pref_long_press_delay"
 
         const val KEY_SOUND = "pref_sound"
+        const val KEY_SOUND_PACK = "pref_sound_pack"
         const val KEY_SOUND_VOLUME = "pref_sound_volume"
         const val KEY_HAPTIC = "pref_haptic"
 

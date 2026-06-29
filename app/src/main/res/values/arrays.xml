@@ -11,4 +11,24 @@
         <item>light</item>
         <item>dark</item>
     </string-array>
+
+    <string-array name="sound_pack_entries">
+        <item>iPhone Inspired (Default)</item>
+        <item>Android Classic</item>
+        <item>Gboard Style</item>
+        <item>Mechanical</item>
+        <item>Soft Click</item>
+        <item>Retro</item>
+        <item>Silent</item>
+    </string-array>
+    <!-- Stored values; parsed by Prefs.soundPack. -->
+    <string-array name="sound_pack_values">
+        <item>iphone</item>
+        <item>android</item>
+        <item>gboard</item>
+        <item>mechanical</item>
+        <item>soft</item>
+        <item>retro</item>
+        <item>silent</item>
+    </string-array>
 </resources>

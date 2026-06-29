@@ -29,6 +29,14 @@ class SoundFeedback(context: Context) {
     /** 0f..1f scalar applied to every sound. */
     var volume: Float = 0.4f
 
+    /**
+     * Selected sound pack id. "silent" mutes entirely. Other ids currently share the
+     * system click; to give a pack its own audio, drop samples named
+     * `<pack>_standard/delete/return/spacebar.(ogg|wav)` into res/raw and load them
+     * the same way [load] handles the generic `keypress_*` files.
+     */
+    var pack: String = "iphone"
+
     private val audioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -68,7 +76,7 @@ class SoundFeedback(context: Context) {
     }
 
     fun play(type: KeyType) {
-        if (!enabled) return
+        if (!enabled || pack == "silent") return
         val bucket = when (type) {
             KeyType.DELETE -> Bucket.DELETE
             KeyType.ENTER -> Bucket.RETURN

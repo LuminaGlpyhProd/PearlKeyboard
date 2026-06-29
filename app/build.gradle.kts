@@ -17,8 +17,8 @@ android {
         applicationId = "com.pearl.keyboard"
         minSdk = 29          // Android 10
         targetSdk = 34       // Android 14
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         // Render vector drawables on all supported API levels.
         vectorDrawables { useSupportLibrary = true }

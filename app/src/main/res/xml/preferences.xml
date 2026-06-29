@@ -55,6 +55,13 @@
             app:key="pref_autocap"
             app:title="@string/pref_autocap_title"
             app:defaultValue="true" />
+        <SeekBarPreference
+            app:key="pref_long_press_delay"
+            app:title="@string/pref_long_press_title"
+            android:max="600"
+            app:min="150"
+            app:defaultValue="320"
+            app:showSeekBarValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_feedback">
@@ -70,6 +77,14 @@
             app:defaultValue="40"
             app:showSeekBarValue="true"
             app:dependency="pref_sound" />
+        <ListPreference
+            app:key="pref_sound_pack"
+            app:title="@string/pref_sound_pack_title"
+            app:entries="@array/sound_pack_entries"
+            app:entryValues="@array/sound_pack_values"
+            app:defaultValue="iphone"
+            app:dependency="pref_sound"
+            app:useSimpleSummaryProvider="true" />
         <SwitchPreferenceCompat
             app:key="pref_haptic"
             app:title="@string/pref_haptic_title"
@@ -89,5 +104,21 @@
             app:key="pref_gif"
             app:title="@string/pref_gif_title"
             app:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_about">
+        <Preference
+            app:key="pref_about_version"
+            app:title="@string/about_version_title"
+            app:selectable="false" />
+        <Preference
+            app:key="pref_about_author"
+            app:title="@string/about_author_title"
+            app:summary="@string/about_author_summary"
+            app:selectable="false" />
+        <Preference
+            app:key="pref_about_source"
+            app:title="@string/about_source_title"
+            app:summary="@string/about_source_summary" />
     </PreferenceCategory>
 </PreferenceScreen>

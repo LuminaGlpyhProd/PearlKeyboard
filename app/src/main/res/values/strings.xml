@@ -51,4 +51,17 @@
     <string name="action_next">next</string>
     <string name="action_return">return</string>
     <string name="space_label">space</string>
+
+    <!-- New settings -->
+    <string name="pref_long_press_title">Long-press delay (ms)</string>
+    <string name="pref_sound_pack_title">Sound pack</string>
+
+    <!-- About -->
+    <string name="cat_about">About</string>
+    <string name="about_app_title">Pearl Keyboard</string>
+    <string name="about_author_title">Author</string>
+    <string name="about_author_summary">eve</string>
+    <string name="about_version_title">Version</string>
+    <string name="about_source_title">Source code</string>
+    <string name="about_source_summary">github.com/LuminaGlpyhProd/PearlKeyboard</string>
 </resources>
