@@ -31,7 +31,7 @@ class EmojiPanelView(context: Context) : LinearLayout(context) {
     private val tabViews = ArrayList<TextView>()
     private var theme: KeyboardTheme = KeyboardTheme.light(false)
     private var selected = 1
-    private var cellPx = context.dpInt(46f)
+    private var cellPx = context.dpInt(54f)   // larger, less cramped touch targets
 
     init {
         EmojiData.init(context)
@@ -39,6 +39,8 @@ class EmojiPanelView(context: Context) : LinearLayout(context) {
 
         grid.layoutManager = GridLayoutManager(context, 8)
         grid.adapter = adapter
+        grid.clipToPadding = false
+        grid.setPadding(context.dpInt(8f), context.dpInt(10f), context.dpInt(8f), context.dpInt(10f))
         addView(grid, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
 
         buildBottomBar(context)
@@ -132,7 +134,7 @@ class EmojiPanelView(context: Context) : LinearLayout(context) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val tv = EmojiTextView(parent.context).apply {
                 gravity = Gravity.CENTER
-                textSize = 24f
+                textSize = 26f
                 layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, cellPx)
                 isClickable = true
             }
