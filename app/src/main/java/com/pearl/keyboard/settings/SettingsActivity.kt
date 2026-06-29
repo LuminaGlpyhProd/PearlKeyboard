@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.button.MaterialButton
 import com.pearl.keyboard.R
+import com.pearl.keyboard.feature.update.UpdateChecker
 
 /**
  * Host screen: onboarding (enable + pick the keyboard, plus a field to try it) and
@@ -33,6 +34,9 @@ class SettingsActivity : AppCompatActivity() {
                 .replace(R.id.settings_container, SettingsFragment())
                 .commit()
         }
+
+        // Automatic update check (silent if already current). User confirms before install.
+        if (Prefs(this).autoUpdate) UpdateChecker.checkAndPrompt(this, silent = true)
     }
 
     companion object {

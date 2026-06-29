@@ -11,6 +11,17 @@
             app:entryValues="@array/theme_values"
             app:defaultValue="system"
             app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:key="pref_theme_preset"
+            app:title="@string/pref_theme_preset_title"
+            app:entries="@array/theme_preset_entries"
+            app:entryValues="@array/theme_preset_values"
+            app:defaultValue="default"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:key="pref_theme_customize"
+            app:title="@string/pref_theme_customize_title"
+            app:summary="@string/pref_theme_customize_summary" />
         <SwitchPreferenceCompat
             app:key="pref_key_borders"
             app:title="@string/pref_key_borders_title"
@@ -104,6 +115,13 @@
             app:key="pref_gif"
             app:title="@string/pref_gif_title"
             app:defaultValue="false" />
+        <SwitchPreferenceCompat
+            app:key="pref_auto_update"
+            app:title="@string/pref_auto_update_title"
+            app:defaultValue="true" />
+        <Preference
+            app:key="pref_check_update"
+            app:title="@string/pref_check_update_title" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/cat_about">

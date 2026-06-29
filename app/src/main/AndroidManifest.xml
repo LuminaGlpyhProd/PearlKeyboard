@@ -5,8 +5,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Microphone for voice typing (requested at runtime via VoicePermissionActivity). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!-- GIF search (scaffold) needs network. Safe to keep even if GIF is disabled. -->
+    <!-- Network: GIF search + in-app update checks. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Lets the in-app updater launch the package installer (user must still confirm). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Allows querying whether a speech-recognition service exists on the device. -->
     <queries>
@@ -49,11 +51,29 @@
             </intent-filter>
         </activity>
 
+        <!-- Theme customizer (background image, blur, accent, …). -->
+        <activity
+            android:name=".settings.ThemeActivity"
+            android:exported="false"
+            android:label="@string/pref_theme_customize_title"
+            android:theme="@style/Theme.PearlKeyboard" />
+
         <!-- Transparent helper that requests the microphone permission for the IME. -->
         <activity
             android:name=".feature.voice.VoicePermissionActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.Transparent" />
+
+        <!-- Serves the downloaded update APK to the package installer. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

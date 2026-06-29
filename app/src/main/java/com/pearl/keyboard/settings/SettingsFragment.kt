@@ -8,6 +8,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.pearl.keyboard.BuildConfig
 import com.pearl.keyboard.R
+import com.pearl.keyboard.feature.update.UpdateChecker
 
 /**
  * Loads res/xml/preferences.xml. When the theme preference changes, re-applies night
@@ -18,6 +19,16 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
+
+        findPreference<Preference>("pref_theme_customize")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), ThemeActivity::class.java))
+            true
+        }
+
+        findPreference<Preference>("pref_check_update")?.setOnPreferenceClickListener {
+            activity?.let { UpdateChecker.checkAndPrompt(it, silent = false) }
+            true
+        }
 
         // About: fill in the live version and make the source row open the repo.
         findPreference<Preference>("pref_about_version")?.summary = BuildConfig.VERSION_NAME

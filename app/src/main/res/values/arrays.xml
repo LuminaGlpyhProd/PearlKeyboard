@@ -31,4 +31,26 @@
         <item>retro</item>
         <item>silent</item>
     </string-array>
+
+    <string-array name="theme_preset_entries">
+        <item>Pearl (default)</item>
+        <item>Pure White</item>
+        <item>AMOLED Black</item>
+        <item>Material Light</item>
+        <item>Material Dark</item>
+        <item>Blue</item>
+        <item>Green</item>
+        <item>Glass</item>
+    </string-array>
+    <!-- Stored values; parsed by Prefs.themePreset / KeyboardTheme.build. -->
+    <string-array name="theme_preset_values">
+        <item>default</item>
+        <item>pure_white</item>
+        <item>amoled</item>
+        <item>material_light</item>
+        <item>material_dark</item>
+        <item>blue</item>
+        <item>green</item>
+        <item>glass</item>
+    </string-array>
 </resources>

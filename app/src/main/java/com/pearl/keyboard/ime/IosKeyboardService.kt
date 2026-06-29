@@ -17,6 +17,7 @@ import com.pearl.keyboard.feature.clipboard.ClipboardHistory
 import com.pearl.keyboard.feature.clipboard.ClipboardPanelView
 import com.pearl.keyboard.feature.emoji.EmojiPanelView
 import com.pearl.keyboard.feature.gif.GifPanelView
+import com.pearl.keyboard.feature.theme.BackgroundImage
 import com.pearl.keyboard.feature.voice.VoiceInputManager
 import com.pearl.keyboard.feature.voice.VoicePermissionActivity
 import com.pearl.keyboard.input.Dictionary
@@ -74,6 +75,8 @@ class IosKeyboardService : InputMethodService(),
         super.onCreate()
         ClipboardHistory.init(this)
         registerClipboardWatcher()
+        // Warm the dictionary off the main thread so the first keypress isn't delayed.
+        Thread { runCatching { dictionary.snapshot() } }.start()
     }
 
     override fun onCreateInputView(): View {
@@ -89,6 +92,7 @@ class IosKeyboardService : InputMethodService(),
 
         // Re-read preferences each time so settings changes take effect immediately.
         applyTheme()
+        applyBackgroundImage()
         with(container.keyboardView) {
             setHeightScale(prefs.keyboardHeightScale)
             setOneHanded(prefs.oneHanded, OneHandedSide.RIGHT)
@@ -425,10 +429,30 @@ class IosKeyboardService : InputMethodService(),
     // ======================================================================
 
     private fun currentTheme(): KeyboardTheme =
-        KeyboardTheme.resolve(this, prefs.themeMode, prefs.keyBorders)
+        KeyboardTheme.build(
+            this, prefs.themePreset, prefs.themeMode, prefs.keyBorders,
+            prefs.accentColor, prefs.keyOpacity
+        )
 
     private fun applyTheme() {
         if (::container.isInitialized) container.setTheme(currentTheme())
+    }
+
+    /** Load the custom background image (off the main thread) and apply it, or clear it. */
+    private fun applyBackgroundImage() {
+        if (!::container.isInitialized) return
+        val path = prefs.bgImagePath
+        if (path.isEmpty()) {
+            container.keyboardView.setBackgroundImage(null, 0)
+            return
+        }
+        val blur = prefs.bgBlur
+        val brightness = prefs.bgBrightness
+        val dim = prefs.bgDim
+        Thread {
+            val bmp = runCatching { BackgroundImage.processed(this, path, blur, brightness) }.getOrNull()
+            container.keyboardView.post { container.keyboardView.setBackgroundImage(bmp, dim) }
+        }.start()
     }
 
     private fun updateActionKey(info: EditorInfo?) {

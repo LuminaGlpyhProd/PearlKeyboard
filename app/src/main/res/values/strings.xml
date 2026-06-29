@@ -19,6 +19,9 @@
 
     <!-- Preference titles -->
     <string name="pref_theme_title">Theme</string>
+    <string name="pref_theme_preset_title">Theme preset</string>
+    <string name="pref_theme_customize_title">Background &amp; customization</string>
+    <string name="pref_theme_customize_summary">Background image, blur, opacity, accent colour</string>
     <string name="pref_key_borders_title">Key borders</string>
     <string name="pref_key_borders_summary">Draw a subtle border around each key</string>
     <string name="pref_keyboard_height_title">Keyboard height</string>
@@ -39,6 +42,8 @@
     <string name="pref_clipboard_title">Clipboard history</string>
     <string name="pref_voice_title">Voice typing</string>
     <string name="pref_gif_title">GIF search (requires API key)</string>
+    <string name="pref_auto_update_title">Check for updates automatically</string>
+    <string name="pref_check_update_title">Check for updates now</string>
 
     <!-- Misc -->
     <string name="clipboard_empty">Copied text shows up here</string>

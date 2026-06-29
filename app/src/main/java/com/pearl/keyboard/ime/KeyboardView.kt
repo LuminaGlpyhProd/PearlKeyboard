@@ -2,11 +2,13 @@ package com.pearl.keyboard.ime
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Handler
@@ -92,6 +94,15 @@ class KeyboardView @JvmOverloads constructor(
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Optional custom background image (#12). Null => solid theme colour.
+    private var bgBitmap: Bitmap? = null
+    private var bgDimAlpha = 0
+    private val bgSrc = Rect()
+    private val bgDst = Rect()
+    private val bgPaint = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val glyphPath = Path()   // reused for shift/delete glyphs (no per-frame alloc)
+
     private val trailPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -177,6 +188,31 @@ class KeyboardView @JvmOverloads constructor(
     fun setHeightScale(scale: Float) {
         heightScale = scale
         requestLayout()
+    }
+
+    /** Set (or clear) the custom background image (#12). [dimPercent] darkens it 0..100. */
+    fun setBackgroundImage(bitmap: Bitmap?, dimPercent: Int) {
+        bgBitmap = bitmap
+        bgDimAlpha = (dimPercent * 255 / 100).coerceIn(0, 255)
+        invalidate()
+    }
+
+    private fun drawBackground(canvas: Canvas) {
+        val bmp = bgBitmap
+        if (bmp == null || bmp.isRecycled || width == 0 || height == 0) {
+            canvas.drawColor(theme.background)
+            return
+        }
+        // Centre-crop the bitmap to fill the keyboard.
+        val scale = max(width / bmp.width.toFloat(), height / bmp.height.toFloat())
+        val cw = width / scale
+        val ch = height / scale
+        val left = (bmp.width - cw) / 2f
+        val top = (bmp.height - ch) / 2f
+        bgSrc.set(left.toInt(), top.toInt(), (left + cw).toInt(), (top + ch).toInt())
+        bgDst.set(0, 0, width, height)
+        canvas.drawBitmap(bmp, bgSrc, bgDst, bgPaint)
+        if (bgDimAlpha > 0) canvas.drawColor(bgDimAlpha shl 24)  // black overlay
     }
 
     /** Char → centre point (view coords) of every letter key — used by the glide decoder. */
@@ -279,7 +315,7 @@ class KeyboardView @JvmOverloads constructor(
     // ======================================================================
 
     override fun onDraw(canvas: Canvas) {
-        canvas.drawColor(theme.background)
+        drawBackground(canvas)
         for (pk in positioned) {
             if (pk.key.isSpacer) continue
             drawKey(canvas, pk)
@@ -387,7 +423,8 @@ class KeyboardView @JvmOverloads constructor(
         val s = min(rect.width(), rect.height()) * 0.30f
         iconPaint.color = color
         iconPaint.style = Paint.Style.FILL
-        val p = Path().apply {
+        glyphPath.reset()
+        glyphPath.apply {
             moveTo(cx, cy - s)               // arrow tip
             lineTo(cx - s, cy)               // left base
             lineTo(cx - s * 0.45f, cy)
@@ -397,7 +434,7 @@ class KeyboardView @JvmOverloads constructor(
             lineTo(cx + s, cy)               // right base
             close()
         }
-        canvas.drawPath(p, iconPaint)
+        canvas.drawPath(glyphPath, iconPaint)
         if (shiftState == ShiftState.LOCKED) {
             // Caps-lock bar under the arrow.
             canvas.drawRect(cx - s * 0.6f, cy + s * 0.95f, cx + s * 0.6f, cy + s * 1.2f, iconPaint)
@@ -412,7 +449,8 @@ class KeyboardView @JvmOverloads constructor(
         iconPaint.color = color
         iconPaint.style = Paint.Style.STROKE
         iconPaint.strokeWidth = context.dp(1.7f)
-        val body = Path().apply {
+        glyphPath.reset()
+        glyphPath.apply {
             moveTo(cx - w, cy)
             lineTo(cx - w * 0.45f, cy - h)
             lineTo(cx + w, cy - h)
@@ -420,7 +458,7 @@ class KeyboardView @JvmOverloads constructor(
             lineTo(cx - w * 0.45f, cy + h)
             close()
         }
-        canvas.drawPath(body, iconPaint)
+        canvas.drawPath(glyphPath, iconPaint)
         // the "x"
         val ax = cx + w * 0.15f
         val arm = h * 0.5f
