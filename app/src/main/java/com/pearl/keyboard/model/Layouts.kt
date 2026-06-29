@@ -38,6 +38,20 @@ object Layouts {
     private fun to123() = Key(label = "123", type = SYMBOLS, targetLayout = LayoutId.SYMBOLS, widthWeight = 1.4f)
     private fun toABC() = Key(label = "ABC", type = LETTERS, targetLayout = LayoutId.LETTERS, widthWeight = 1.4f)
     private fun toSym2() = Key(label = "#+=", type = SYMBOLS, targetLayout = LayoutId.SYMBOLS2, widthWeight = 1.3f)
+    // Row-3 left mode key uses the SAME 1.3 weight as Shift so Delete lines up across pages.
+    private fun to123Row3() = Key(label = "123", type = SYMBOLS, targetLayout = LayoutId.SYMBOLS, widthWeight = 1.3f)
+
+    /**
+     * Shared symbol row 3 — same column skeleton as the letters' Shift…Delete row
+     * (left key 1.3 + seven 1.0 keys + Delete 1.3). Because the row's weights, cell
+     * count and Delete weight match the letters row exactly, the Delete key and the
+     * shared punctuation render in IDENTICAL positions on every page (muscle memory).
+     */
+    private fun symbolRow3(leftKey: Key): List<Key> = listOf(
+        leftKey,
+        c("."), c(","), c("?", "¿"), c("!", "¡"), c("'", "’‘`"), c("\"", "“”„"), c(":"),
+        del
+    )
 
     /** Shared bottom row; [leftSwitch] is 123 (letters) or ABC (symbols). */
     private fun bottomRow(leftSwitch: Key): List<Key> =
@@ -77,14 +91,10 @@ object Layouts {
                 c("6"), c("7"), c("8"), c("9"), c("0")
             ),
             listOf(
-                c("-", "–—•"), c("/"), c(":"), c(";"), c("("),
-                c(")"), c("$", "€£¥₩"), c("&"), c("@"), c("\"", "“”„")
+                c("-", "–—•"), c("/"), c("*"), c(";"), c("("),
+                c(")"), c("$", "€£¥₩"), c("&"), c("@"), c("=")
             ),
-            listOf(
-                toSym2(),
-                c("."), c(","), c("?", "¿"), c("!", "¡"), c("'", "’‘`"),
-                del
-            ),
+            symbolRow3(toSym2()),
             bottomRow(toABC())
         )
     )
@@ -102,11 +112,7 @@ object Layouts {
                 c("_"), c("\\"), c("|"), c("~"), c("<"),
                 c(">"), c("€"), c("£"), c("¥"), c("•")
             ),
-            listOf(
-                to123(),
-                c("."), c(","), c("?"), c("!"), c("'"),
-                del
-            ),
+            symbolRow3(to123Row3()),
             bottomRow(toABC())
         )
     )
