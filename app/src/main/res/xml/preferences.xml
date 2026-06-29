@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings shown by SettingsFragment. Keys here must match constants in settings/Prefs.kt. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/cat_appearance">
+        <ListPreference
+            app:key="pref_theme"
+            app:title="@string/pref_theme_title"
+            app:entries="@array/theme_entries"
+            app:entryValues="@array/theme_values"
+            app:defaultValue="system"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_key_borders"
+            app:title="@string/pref_key_borders_title"
+            app:summary="@string/pref_key_borders_summary"
+            app:defaultValue="false" />
+        <SeekBarPreference
+            app:key="pref_keyboard_height"
+            app:title="@string/pref_keyboard_height_title"
+            android:max="130"
+            app:min="70"
+            app:defaultValue="100"
+            app:showSeekBarValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_popup_preview"
+            app:title="@string/pref_popup_title"
+            app:summary="@string/pref_popup_summary"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_one_handed"
+            app:title="@string/pref_one_handed_title"
+            app:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_typing">
+        <SwitchPreferenceCompat
+            app:key="pref_autocorrect"
+            app:title="@string/pref_autocorrect_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_predictions"
+            app:title="@string/pref_predictions_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_gesture"
+            app:title="@string/pref_gesture_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_double_space_period"
+            app:title="@string/pref_double_space_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_autocap"
+            app:title="@string/pref_autocap_title"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_feedback">
+        <SwitchPreferenceCompat
+            app:key="pref_sound"
+            app:title="@string/pref_sound_title"
+            app:defaultValue="true" />
+        <SeekBarPreference
+            app:key="pref_sound_volume"
+            app:title="@string/pref_sound_volume_title"
+            android:max="100"
+            app:min="0"
+            app:defaultValue="40"
+            app:showSeekBarValue="true"
+            app:dependency="pref_sound" />
+        <SwitchPreferenceCompat
+            app:key="pref_haptic"
+            app:title="@string/pref_haptic_title"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_features">
+        <SwitchPreferenceCompat
+            app:key="pref_clipboard"
+            app:title="@string/pref_clipboard_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_voice"
+            app:title="@string/pref_voice_title"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="pref_gif"
+            app:title="@string/pref_gif_title"
+            app:defaultValue="false" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- iOS-like metrics. Most layout is computed in code from the view width so the
+         keyboard scales across phones/tablets/foldables; these are the design defaults. -->
+
+    <!-- Per-row key height (portrait phone). Scaled by the "keyboard height" preference. -->
+    <dimen name="key_row_height">46dp</dimen>
+    <!-- Suggestion / predictive strip height. -->
+    <dimen name="suggestion_strip_height">44dp</dimen>
+
+    <!-- Gaps between keys (iOS uses a small, even gutter). -->
+    <dimen name="key_gap_horizontal">6dp</dimen>
+    <dimen name="key_gap_vertical">11dp</dimen>
+
+    <!-- Rounded-corner radius of each key. -->
+    <dimen name="key_corner_radius">6dp</dimen>
+
+    <!-- Outer padding around the whole key field. -->
+    <dimen name="keyboard_side_padding">3dp</dimen>
+    <dimen name="keyboard_top_padding">8dp</dimen>
+    <dimen name="keyboard_bottom_padding">4dp</dimen>
+
+    <!-- Typography. -->
+    <dimen name="key_letter_text_size">23sp</dimen>
+    <dimen name="key_special_text_size">16sp</dimen>
+    <dimen name="popup_text_size">28sp</dimen>
+    <dimen name="suggestion_text_size">17sp</dimen>
+</resources>

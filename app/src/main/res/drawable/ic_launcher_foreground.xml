@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple stylised keyboard glyph, white on the brand-blue adaptive background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,42 h8 v8 h-8 z M38,42 h8 v8 h-8 z M50,42 h8 v8 h-8 z M62,42 h8 v8 h-8 z M74,42 h8 v8 h-8 z M26,54 h8 v8 h-8 z M38,54 h8 v8 h-8 z M50,54 h8 v8 h-8 z M62,54 h8 v8 h-8 z M74,54 h8 v8 h-8 z M32,66 h44 v8 h-44 z" />
+</vector>
