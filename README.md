@@ -1,7 +1,7 @@
 # Pearl Keyboard — an iOS-style keyboard for Android
 
-[![Android CI](https://github.com/LuminaGlpyhProd/pearl-keyboard/actions/workflows/android.yml/badge.svg)](https://github.com/LuminaGlpyhProd/pearl-keyboard/actions/workflows/android.yml)
-[![Release](https://img.shields.io/github/v/release/LuminaGlpyhProd/pearl-keyboard?include_prereleases&sort=semver)](https://github.com/LuminaGlpyhProd/pearl-keyboard/releases)
+[![Android CI](https://github.com/LuminaGlpyhProd/PearlKeyboard/actions/workflows/android.yml/badge.svg)](https://github.com/LuminaGlpyhProd/PearlKeyboard/actions/workflows/android.yml)
+[![Release](https://img.shields.io/github/v/release/LuminaGlpyhProd/PearlKeyboard?include_prereleases&sort=semver)](https://github.com/LuminaGlpyhProd/PearlKeyboard/releases)
 ![Min SDK](https://img.shields.io/badge/minSdk-29%20(Android%2010)-3DDC84)
 ![Language](https://img.shields.io/badge/Kotlin-100%25-7F52FF)
 ![License](https://img.shields.io/badge/license-Proprietary-red)
@@ -71,13 +71,13 @@ accent bar, light/dark palettes, the blue action key, and the typing rhythm.
 
 ## Download
 
-Pre-built APK/AAB are published on the **[Releases page](https://github.com/LuminaGlpyhProd/pearl-keyboard/releases)** once you push a `v*` tag (the CI builds and attaches them automatically — see [Publishing](#publishing-to-github-manual-steps)).
+Pre-built APK/AAB are published on the **[Releases page](https://github.com/LuminaGlpyhProd/PearlKeyboard/releases)** once you push a `v*` tag (the CI builds and attaches them automatically — see [Publishing](#publishing-to-github-manual-steps)).
 
 - **`app-debug.apk`** — installs immediately on any Android 10+ device (debug-signed). Best for trying it out.
 - **`app-release.apk`** — release build (signed if you configure signing secrets, otherwise unsigned).
 - **`app-release.aab`** — Android App Bundle for Google Play.
 
-Every push to `main` also uploads these as **workflow artifacts** under the [Actions tab](https://github.com/LuminaGlpyhProd/pearl-keyboard/actions).
+Every push to `main` also uploads these as **workflow artifacts** under the [Actions tab](https://github.com/LuminaGlpyhProd/PearlKeyboard/actions).
 
 ## Screenshots
 
@@ -141,11 +141,11 @@ binaries and the GitHub Release are produced by CI, and the initial push is done
 history with milestone commits is already created locally.
 
 ```bash
-# 1) Create an EMPTY repo on github.com named: LuminaGlpyhProd/pearl-keyboard
+# 1) Create an EMPTY repo on github.com named: LuminaGlpyhProd/PearlKeyboard
 #    (no README/license/.gitignore — this repo already has them)
 
 # 2) From the project folder, point it at your repo and push:
-git remote add origin https://github.com/LuminaGlpyhProd/pearl-keyboard.git
+git remote add origin https://github.com/LuminaGlpyhProd/PearlKeyboard.git
 git branch -M main
 git push -u origin main
 ```
@@ -175,7 +175,7 @@ In **GitHub ▸ Settings ▸ Secrets and variables ▸ Actions**, add:
 ## Project structure
 
 ```
-pearl-keyboard/
+PearlKeyboard/
 ├─ .github/workflows/         # CI build + release automation
 ├─ app/
 │  ├─ build.gradle.kts        # SDK levels, deps, optional release signing
