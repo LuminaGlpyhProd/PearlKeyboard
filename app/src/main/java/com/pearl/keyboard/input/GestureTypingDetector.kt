@@ -21,30 +21,44 @@ import kotlin.math.min
 object GestureTypingDetector {
 
     private const val SAMPLES = 24
-    private const val ACCEPT_THRESHOLD = 1.45 // normalised average distance; lower = stricter
+    // Accept the N nearest keys to the swipe's start/end (not just the single closest),
+    // so a slightly-off start or end still finds the intended word.
+    private const val ENDPOINT_KEYS = 2
 
-    fun decode(points: List<PointF>, centers: Map<Char, PointF>, dict: Dictionary): String? {
-        if (points.size < 3 || centers.isEmpty()) return null
+    /**
+     * Rank dictionary words for this swipe, best first (up to [max]).
+     *
+     * Unlike a strict matcher this ALWAYS returns its best guesses whenever any word fits
+     * the start/end keys — so the caller can auto-insert the top word the moment the
+     * finger lifts (Gboard-style) and still offer the rest as alternatives, instead of
+     * the user having to tap the strip.
+     */
+    fun decodeCandidates(
+        points: List<PointF>, centers: Map<Char, PointF>, dict: Dictionary, max: Int
+    ): List<String> {
+        if (points.size < 3 || centers.isEmpty()) return emptyList()
 
         val path = resample(points, SAMPLES)
-        val firstKey = nearestKey(path.first(), centers) ?: return null
-        val lastKey = nearestKey(path.last(), centers) ?: return null
+        val startKeys = nearestKeys(path.first(), centers, ENDPOINT_KEYS)
+        val endKeys = nearestKeys(path.last(), centers, ENDPOINT_KEYS)
+        if (startKeys.isEmpty() || endKeys.isEmpty()) return emptyList()
         val pitch = averageKeyPitch(centers).coerceAtLeast(1.0)
 
-        var best: String? = null
-        var bestScore = Double.MAX_VALUE
+        val scored = ArrayList<Pair<String, Double>>()
         for (w in dict.snapshot()) {
             if (w.length < 2) continue
-            if (w.first() != firstKey || w.last() != lastKey) continue
+            if (w[0] !in startKeys || w[w.length - 1] !in endKeys) continue
             val cost = alignCost(w, path, centers, pitch) ?: continue
-            val score = cost - dict.frequencyScore(w) * 0.5
-            if (score < bestScore) {
-                bestScore = score
-                best = w
-            }
+            // Lower cost is better; a small frequency bonus breaks ties toward common words.
+            scored.add(w to (cost - dict.frequencyScore(w) * 0.5))
         }
-        return best?.takeIf { bestScore < ACCEPT_THRESHOLD }
+        scored.sortBy { it.second }
+        return scored.take(max).map { it.first }
     }
+
+    /** The single best word for this swipe (or null if nothing fits the endpoints). */
+    fun decode(points: List<PointF>, centers: Map<Char, PointF>, dict: Dictionary): String? =
+        decodeCandidates(points, centers, dict, 1).firstOrNull()
 
     private fun alignCost(word: String, path: List<PointF>, centers: Map<Char, PointF>, pitch: Double): Double? {
         val l = word.length
@@ -67,18 +81,13 @@ object GestureTypingDetector {
         return total / n / pitch
     }
 
-    private fun nearestKey(p: PointF, centers: Map<Char, PointF>): Char? {
-        var bestChar: Char? = null
-        var bestD = Double.MAX_VALUE
-        for ((ch, c) in centers) {
-            val d = dist(p, c)
-            if (d < bestD) {
-                bestD = d
-                bestChar = ch
-            }
-        }
-        return bestChar
-    }
+    /** The [n] keys whose centres are closest to point [p]. */
+    private fun nearestKeys(p: PointF, centers: Map<Char, PointF>, n: Int): Set<Char> =
+        centers.entries
+            .sortedBy { dist(p, it.value) }
+            .take(n)
+            .map { it.key }
+            .toSet()
 
     private fun averageKeyPitch(centers: Map<Char, PointF>): Double {
         val list = centers.values.toList()

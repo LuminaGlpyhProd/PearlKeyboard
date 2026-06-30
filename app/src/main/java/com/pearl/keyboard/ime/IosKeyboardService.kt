@@ -222,9 +222,10 @@ class IosKeyboardService : InputMethodService(),
     override fun onGesturePreview(points: List<PointF>) {
         if (!prefs.gestureTyping) return
         val centers = container.keyboardView.letterKeyCenters()
-        val word = GestureTypingDetector.decode(points, centers, dictionary) ?: return
-        // Live guess only — not committed. The strip is refreshed when the swipe ends.
-        container.strip.setSuggestions(listOf(word), 0)
+        // Live, continuously-updating top guesses (not committed). The best word is
+        // auto-inserted when the finger lifts (see onGesture), so no tap is required.
+        val words = GestureTypingDetector.decodeCandidates(points, centers, dictionary, 3)
+        if (words.isNotEmpty()) container.strip.setSuggestions(words, 0)
     }
 
     override fun onAction(action: KeyAction) {
