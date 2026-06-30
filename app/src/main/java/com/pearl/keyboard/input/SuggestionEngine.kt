@@ -38,32 +38,38 @@ class SuggestionEngine(private val dict: Dictionary) {
             return Suggestions(display.take(max), null)
         }
 
-        val correction = bestCorrection(lower)
+        val correction = bestCorrection(lower)   // (word, editDistance) or null
         add(typed)
-        correction?.let(::add)
+        correction?.let { add(it.first) }
         predictions.forEach(::add)
-        return Suggestions(display.take(max), correction)
+        // Only AUTO-replace an obvious single-edit typo. Distance-2 matches are offered in
+        // the strip but NEVER applied silently, so the user's intended wording is preserved
+        // (#2 — no aggressive replacements). Known/learned words are never corrected (above).
+        val auto = correction?.takeIf { it.second <= 1 }?.first
+        return Suggestions(display.take(max), auto)
     }
 
-    /** Closest known word, or null if nothing is close enough. */
-    private fun bestCorrection(word: String): String? {
+    /** Closest known word + its edit distance, or null if nothing is close enough. */
+    private fun bestCorrection(word: String): Pair<String, Int>? {
         if (word.length < 2) return null
         val maxDist = if (word.length <= 4) 1 else 2
         var best: String? = null
+        var bestDist = Int.MAX_VALUE
         var bestKey = Double.MAX_VALUE
         for (cand in dict.snapshot()) {
             if (abs(cand.length - word.length) > maxDist) continue
             val d = editDistance(word, cand, maxDist)
-            if (d in 0..maxDist) {
+            if (d in 1..maxDist) {   // d==0 means identical (not a correction)
                 // Prefer fewer edits, then higher frequency.
                 val key = d.toDouble() - dict.frequencyScore(cand) * 0.9
                 if (key < bestKey) {
                     bestKey = key
+                    bestDist = d
                     best = cand
                 }
             }
         }
-        return best?.takeIf { it != word }
+        return best?.let { if (it != word) Pair(it, bestDist) else null }
     }
 
     /** Levenshtein distance with an early-out once it exceeds [max]. */
