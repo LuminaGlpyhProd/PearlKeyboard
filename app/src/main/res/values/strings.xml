@@ -38,6 +38,7 @@
     <string name="pref_sound_title">Sound on keypress</string>
     <string name="pref_sound_volume_title">Keypress sound volume</string>
     <string name="pref_haptic_title">Haptic feedback</string>
+    <string name="pref_haptic_strength_title">Vibration strength</string>
 
     <string name="pref_clipboard_title">Clipboard history</string>
     <string name="pref_voice_title">Voice typing</string>

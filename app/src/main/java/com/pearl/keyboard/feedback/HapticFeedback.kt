@@ -18,6 +18,9 @@ class HapticFeedback(context: Context) {
 
     var enabled: Boolean = true
 
+    /** "light" | "medium" | "strong" — scales the predefined effect used. */
+    var strength: String = "light"
+
     private val vibrator: Vibrator? = runCatching {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val mgr = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -34,11 +37,17 @@ class HapticFeedback(context: Context) {
         val v = vibrator ?: return
         if (!v.hasVibrator()) return
 
-        // Heavier keys (return/shift/layout switches) get a slightly stronger click.
-        val effectId = when (type) {
+        // Heavier keys (return/shift/layout switches) get a slightly stronger click; the
+        // overall level is scaled by the user's strength preference.
+        val special = when (type) {
             KeyType.ENTER, KeyType.SHIFT, KeyType.SYMBOLS,
-            KeyType.LETTERS, KeyType.GLOBE, KeyType.EMOJI -> VibrationEffect.EFFECT_CLICK
-            else -> VibrationEffect.EFFECT_TICK
+            KeyType.LETTERS, KeyType.GLOBE, KeyType.EMOJI -> true
+            else -> false
+        }
+        val effectId = when (strength) {
+            "strong" -> VibrationEffect.EFFECT_HEAVY_CLICK
+            "medium" -> if (special) VibrationEffect.EFFECT_HEAVY_CLICK else VibrationEffect.EFFECT_CLICK
+            else -> if (special) VibrationEffect.EFFECT_CLICK else VibrationEffect.EFFECT_TICK
         }
         runCatching {
             v.vibrate(VibrationEffect.createPredefined(effectId))

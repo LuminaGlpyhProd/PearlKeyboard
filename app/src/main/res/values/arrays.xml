@@ -32,6 +32,17 @@
         <item>silent</item>
     </string-array>
 
+    <string-array name="haptic_strength_entries">
+        <item>Light</item>
+        <item>Medium</item>
+        <item>Strong</item>
+    </string-array>
+    <string-array name="haptic_strength_values">
+        <item>light</item>
+        <item>medium</item>
+        <item>strong</item>
+    </string-array>
+
     <string-array name="theme_preset_entries">
         <item>Pearl (default)</item>
         <item>Pure White</item>

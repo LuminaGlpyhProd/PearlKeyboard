@@ -46,7 +46,8 @@ class Prefs(context: Context) {
     // Feedback
     val sound: Boolean get() = sp.getBoolean(KEY_SOUND, true)
     val soundVolume: Float get() = sp.getInt(KEY_SOUND_VOLUME, 40).coerceIn(0, 100) / 100f
-    val haptics: Boolean get() = sp.getBoolean(KEY_HAPTIC, true)
+    val haptics: Boolean get() = sp.getBoolean(KEY_HAPTIC, false)   // off by default (#4)
+    val hapticStrength: String get() = sp.getString(KEY_HAPTIC_STRENGTH, "light") ?: "light"
     /** Sound pack id: iphone | android | gboard | mechanical | soft | retro | silent. */
     val soundPack: String get() = sp.getString(KEY_SOUND_PACK, "iphone") ?: "iphone"
 
@@ -88,6 +89,7 @@ class Prefs(context: Context) {
         const val KEY_SOUND_PACK = "pref_sound_pack"
         const val KEY_SOUND_VOLUME = "pref_sound_volume"
         const val KEY_HAPTIC = "pref_haptic"
+        const val KEY_HAPTIC_STRENGTH = "pref_haptic_strength"
 
         const val KEY_CLIPBOARD = "pref_clipboard"
         const val KEY_VOICE = "pref_voice"
