@@ -68,34 +68,33 @@ class GifPanelView(context: Context) : LinearLayout(context) {
             message.gravity = Gravity.CENTER
             message.setPadding(context.dpInt(24f), context.dpInt(24f), context.dpInt(24f), 0)
             addView(message, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
-            return
-        }
-
-        // Category chips
-        val scroller = HorizontalScrollView(context).apply { isHorizontalScrollBarEnabled = false }
-        val chipRow = LinearLayout(context).apply { orientation = HORIZONTAL }
-        categories.forEachIndexed { index, (label, term) ->
-            val chip = TextView(context).apply {
-                text = label
-                textSize = 15f
-                setPadding(context.dpInt(12f), context.dpInt(8f), context.dpInt(12f), context.dpInt(8f))
-                isClickable = true
-                setOnClickListener { selectCategory(index, term) }
+        } else {
+            // Category chips
+            val scroller = HorizontalScrollView(context).apply { isHorizontalScrollBarEnabled = false }
+            val chipRow = LinearLayout(context).apply { orientation = HORIZONTAL }
+            categories.forEachIndexed { index, (label, term) ->
+                val chip = TextView(context).apply {
+                    text = label
+                    textSize = 15f
+                    setPadding(context.dpInt(12f), context.dpInt(8f), context.dpInt(12f), context.dpInt(8f))
+                    isClickable = true
+                    setOnClickListener { selectCategory(index, term) }
+                }
+                chipViews.add(chip)
+                chipRow.addView(chip)
             }
-            chipViews.add(chip)
-            chipRow.addView(chip)
+            scroller.addView(chipRow)
+            bar.addView(scroller, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(bar)
+
+            grid.layoutManager = GridLayoutManager(context, 2)
+            grid.adapter = adapter
+            grid.clipToPadding = false
+            grid.setPadding(context.dpInt(6f), context.dpInt(6f), context.dpInt(6f), context.dpInt(6f))
+            addView(grid, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
+
+            selectCategory(0, "")
         }
-        scroller.addView(chipRow)
-        bar.addView(scroller, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        addView(bar)
-
-        grid.layoutManager = GridLayoutManager(context, 2)
-        grid.adapter = adapter
-        grid.clipToPadding = false
-        grid.setPadding(context.dpInt(6f), context.dpInt(6f), context.dpInt(6f), context.dpInt(6f))
-        addView(grid, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
-
-        selectCategory(0, "")
     }
 
     fun setTheme(t: KeyboardTheme) {
