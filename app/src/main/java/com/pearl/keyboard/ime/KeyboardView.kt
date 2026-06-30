@@ -121,6 +121,7 @@ class KeyboardView @JvmOverloads constructor(
 
     private var previewPointerId = -1
     private var deletePointerId = -1
+    private var deleteActive = false
     private var alternatesPointerId = -1
 
     private var gesturePointerId = -1
@@ -531,6 +532,7 @@ class KeyboardView @JvmOverloads constructor(
         when (pk.key.type) {
             KeyType.DELETE -> {
                 deletePointerId = id
+                deleteActive = true
                 listener?.onAction(KeyAction.Delete)
                 handler.postDelayed(deleteRunnable, REPEAT_DELAY)
             }
@@ -604,6 +606,7 @@ class KeyboardView @JvmOverloads constructor(
             return
         }
         if (id == deletePointerId) {
+            deleteActive = false
             handler.removeCallbacks(deleteRunnable)
             deletePointerId = -1
             cleanupPointer(id)
@@ -640,6 +643,7 @@ class KeyboardView @JvmOverloads constructor(
         pointerKeys.clear()
         pressedKeys.clear()
         deletePointerId = -1
+        deleteActive = false
         alternatesPointerId = -1
         previewPointerId = -1
         gesturePointerId = -1
@@ -779,17 +783,24 @@ class KeyboardView @JvmOverloads constructor(
 
     private val deleteRunnable = object : Runnable {
         override fun run() {
-            // No feedback here — the service plays it per actual deletion and calls
-            // cancelDeleteRepeat() the moment there's nothing left to delete.
+            if (!deleteActive) return
+            // The service may call cancelDeleteRepeat() from inside onAction (when the
+            // field is now empty), which flips deleteActive off — so we must re-check it
+            // before re-scheduling, otherwise the repeat would run away forever.
             listener?.onAction(KeyAction.Delete)
-            handler.postDelayed(this, REPEAT_INTERVAL)
+            if (deleteActive) handler.postDelayed(this, REPEAT_INTERVAL)
         }
     }
 
-    /** Stop the backspace auto-repeat immediately (called when the field is empty). */
+    /**
+     * Stop the backspace auto-repeat immediately. Called by the service when nothing is
+     * left to delete, and on key release. Clears [deleteActive] FIRST so an in-flight
+     * [deleteRunnable] cannot re-schedule itself. The pointer id is left intact so the
+     * eventual ACTION_UP still cleans up normally.
+     */
     fun cancelDeleteRepeat() {
+        deleteActive = false
         handler.removeCallbacks(deleteRunnable)
-        deletePointerId = -1
     }
 
     // ---- glide gesture ----------------------------------------------------
@@ -843,6 +854,7 @@ class KeyboardView @JvmOverloads constructor(
         pointerKeys.clear()
         pressedKeys.clear()
         deletePointerId = -1
+        deleteActive = false
         alternatesPointerId = -1
         gesturePointerId = -1
         gestureCandidateId = -1
