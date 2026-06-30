@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -12,7 +14,7 @@ val releaseStoreFile: String? = System.getenv("KEYSTORE_FILE")
 // Tenor GIF API key, resolved (in priority order) from the TENOR_API_KEY env var, a
 // `tenor.api.key` Gradle property, or `tenor.api.key=...` in local.properties. Never
 // hardcoded in source. Empty => the GIF panel shows setup instructions.
-val tenorLocalProps = java.util.Properties()
+val tenorLocalProps = Properties()
 val tenorLocalFile = rootProject.file("local.properties")
 if (tenorLocalFile.exists()) tenorLocalFile.inputStream().use { tenorLocalProps.load(it) }
 val tenorApiKey: String =
