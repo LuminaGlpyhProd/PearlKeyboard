@@ -52,12 +52,16 @@ jobs:
       - name: Build release AAB/APK + debug APK
         run: gradle :app:bundleRelease :app:assembleRelease :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Collect artifacts
+      - name: Collect & brand artifacts
         run: |
+          VER="${GITHUB_REF_NAME}"
           mkdir -p dist
-          cp app/build/outputs/apk/debug/*.apk dist/ 2>/dev/null || true
-          cp app/build/outputs/apk/release/*.apk dist/ 2>/dev/null || true
-          cp app/build/outputs/bundle/release/*.aab dist/ 2>/dev/null || true
+          rel=$(ls app/build/outputs/apk/release/*.apk 2>/dev/null | head -1)
+          [ -n "$rel" ] && cp "$rel" "dist/PearlKeyboard-${VER}.apk"
+          aab=$(ls app/build/outputs/bundle/release/*.aab 2>/dev/null | head -1)
+          [ -n "$aab" ] && cp "$aab" "dist/PearlKeyboard-${VER}.aab"
+          dbg=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -1)
+          [ -n "$dbg" ] && cp "$dbg" "dist/PearlKeyboard-${VER}-debug.apk"
           ls -la dist
 
       - name: Publish GitHub Release
@@ -67,14 +71,16 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: false
           body: |
-            Automated build for **${{ github.ref_name }}**.
+            Pearl Keyboard **${{ github.ref_name }}**.
 
-            ### Artifacts
-            - `app-debug.apk` — installs immediately on any Android 10+ device (debug-signed). Best for quickly trying the keyboard.
-            - `app-release*.apk` — release build. Signed **only if** signing secrets are configured in the repo; otherwise it is unsigned (`app-release-unsigned.apk`) and must be signed before installing.
-            - `app-release.aab` — Android App Bundle for uploading to Google Play.
+            ### Downloads
+            - **`PearlKeyboard-${{ github.ref_name }}.apk`** — the keyboard. **Install this.** It's a signed release build, so the in-app updater can update it in place on future releases.
+            - `PearlKeyboard-${{ github.ref_name }}.aab` — Android App Bundle (Google Play).
+            - `PearlKeyboard-${{ github.ref_name }}-debug.apk` — developer build (separate app id `….debug`).
 
-            ### Install (APK)
-            1. Download `app-debug.apk` onto your phone.
+            ### Install
+            1. Download **`PearlKeyboard-${{ github.ref_name }}.apk`**.
             2. Allow "Install unknown apps" for your browser/file manager and open it.
             3. Launch **Pearl Keyboard**, tap **Enable in Settings**, then **Choose Keyboard**.
+
+            > Coming from an older **debug** build (`…​.debug`)? Uninstall it first, then install this release APK once — after that, updates apply automatically.

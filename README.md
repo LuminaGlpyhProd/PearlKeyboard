@@ -76,9 +76,11 @@ accent bar, light/dark palettes, the blue action key, and the typing rhythm.
 
 Pre-built APK/AAB are published on the **[Releases page](https://github.com/LuminaGlpyhProd/PearlKeyboard/releases)** once you push a `v*` tag (the CI builds and attaches them automatically — see [Publishing](#publishing-to-github-manual-steps)).
 
-- **`app-debug.apk`** — installs immediately on any Android 10+ device (debug-signed). Best for trying it out.
-- **`app-release.apk`** — release build (signed if you configure signing secrets, otherwise unsigned).
-- **`app-release.aab`** — Android App Bundle for Google Play.
+- **`PearlKeyboard-vX.Y.Z.apk`** — **install this.** A signed release build; the in-app updater can update it in place on future releases.
+- **`PearlKeyboard-vX.Y.Z.aab`** — Android App Bundle for Google Play.
+- **`PearlKeyboard-vX.Y.Z-debug.apk`** — developer build (separate app id `….debug`).
+
+> The release APK is signed with a **committed key** (`app/pearl-release.jks`, password `pearlkeyboard`) purely so sideloaded updates work out of the box. It is **not** a secret production key — for real distribution, replace it with your own private keystore via signing secrets (see [Publishing](#publishing-to-github-manual-steps)).
 
 Every push to `main` also uploads these as **workflow artifacts** under the [Actions tab](https://github.com/LuminaGlpyhProd/PearlKeyboard/actions).
 
@@ -160,9 +162,12 @@ git tag v1.0.0
 git push origin v1.0.0      # triggers release.yml → builds + creates the GitHub Release
 ```
 
-### (Optional) Signed release builds
-By default the release APK/AAB are **unsigned** (the debug APK is always installable). To get a
-signed release, create a keystore and add four repository secrets — CI picks them up automatically:
+### Release signing
+By default the release build is signed with the **committed** key `app/pearl-release.jks`
+(alias `pearl`, password `pearlkeyboard`) so released APKs install and **update in place**
+across versions without any setup. This key is public — fine for personal sideloading, not for
+Play. To sign with your **own private** key instead, add four repository secrets and CI uses
+them automatically (overriding the committed key):
 
 ```bash
 keytool -genkey -v -keystore release.keystore -alias pearl -keyalg RSA -keysize 2048 -validity 10000
@@ -277,7 +282,7 @@ their own licenses (Apache-2.0).
 | Android Studio: "Gradle wrapper missing" | Let AS sync (it generates it) or run `gradle wrapper --gradle-version 8.7`. |
 | CLI build can't find the SDK | Set `ANDROID_SDK_ROOT`, or create `local.properties` with `sdk.dir=/path/to/Android/sdk` (AS does this automatically). |
 | Keyboard doesn't appear after install | Enable it in **Settings ▸ System ▸ Languages & input ▸ On-screen keyboard**, then pick it with the keyboard switcher. |
-| Release APK won't install | It's unsigned unless you configured signing secrets — install `app-debug.apk`, or sign the release. |
+| "App not installed" / package conflict on update | An older **debug** build (`….debug`) is installed. Uninstall it, then install `PearlKeyboard-vX.Y.Z.apk` once; future updates apply in place. |
 | Voice typing does nothing | Grant the microphone permission (tap the mic, approve, tap again) and ensure a speech service is installed. |
 
 ---
