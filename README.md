@@ -236,7 +236,7 @@ typing smooth.
 | Add a language | Add a letters layout in `Layouts.kt` + a `<subtype>` in `res/xml/method.xml`. |
 | Improve predictions | Replace `assets/dictionaries/en_words.txt`; swap `Dictionary` for a trie/FST. |
 | Tune glide | `GestureTypingDetector.ACCEPT_THRESHOLD`, `KeyboardView.gestureSlop`. |
-| Enable GIF search | Put a Tenor key in `GifPanelView.TENOR_API_KEY` and implement the grid. |
+| Enable GIF search | Add `tenor.api.key=YOUR_KEY` to `local.properties` (or set the `TENOR_API_KEY` env var / `-Ptenor.api.key=` Gradle property), rebuild, then turn on **GIF** in settings. The key is injected via `BuildConfig` — never hardcoded. |
 | Rename app/package | Change `applicationId` + `namespace`, the manifest, and the package folders. |
 
 ## Legal & assets

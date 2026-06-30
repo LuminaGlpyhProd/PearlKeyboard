@@ -9,6 +9,21 @@ plugins {
 // from repository secrets to produce a properly signed release. See README → Publishing.
 val releaseStoreFile: String? = System.getenv("KEYSTORE_FILE")
 
+// Tenor GIF API key, resolved (in priority order) from the TENOR_API_KEY env var, a
+// `tenor.api.key` Gradle property, or `tenor.api.key=...` in local.properties. It is
+// never hardcoded in source. Empty => the GIF panel shows setup instructions.
+val tenorApiKey: String = run {
+    System.getenv("TENOR_API_KEY")?.let { return@run it }
+    (project.findProperty("tenor.api.key") as String?)?.let { return@run it }
+    val lp = rootProject.file("local.properties")
+    if (lp.exists()) {
+        val p = java.util.Properties()
+        lp.inputStream().use { p.load(it) }
+        p.getProperty("tenor.api.key")?.let { return@run it }
+    }
+    ""
+}
+
 android {
     namespace = "com.pearl.keyboard"
     compileSdk = 34
@@ -22,6 +37,9 @@ android {
 
         // Render vector drawables on all supported API levels.
         vectorDrawables { useSupportLibrary = true }
+
+        // Exposes the Tenor key (resolved above) as BuildConfig.TENOR_API_KEY.
+        buildConfigField("String", "TENOR_API_KEY", "\"$tenorApiKey\"")
     }
 
     signingConfigs {

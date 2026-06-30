@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.pearl.keyboard.BuildConfig
 import com.pearl.keyboard.ime.PanelActions
 import com.pearl.keyboard.theme.KeyboardTheme
 import com.pearl.keyboard.util.dpInt
@@ -32,8 +33,12 @@ class GifPanelView(context: Context) : LinearLayout(context) {
     var actions: PanelActions? = null
     private var theme: KeyboardTheme = KeyboardTheme.light(false)
 
-    private val tenor: TenorClient? = if (TENOR_API_KEY.isNotEmpty()) TenorClient(TENOR_API_KEY) else null
+    private val apiKey: String = BuildConfig.TENOR_API_KEY.ifEmpty { TENOR_API_KEY }
+    private val tenor: TenorClient? = if (apiKey.isNotEmpty()) TenorClient(apiKey) else null
     private val results = ArrayList<TenorClient.Gif>()
+    private var currentTerm = ""
+    private var nextPos: String? = null
+    private var loading = false
     private val adapter = GifAdapter()
     private val grid = RecyclerView(context)
     private val close = TextView(context)
@@ -63,8 +68,9 @@ class GifPanelView(context: Context) : LinearLayout(context) {
         if (tenor == null) {
             bar.addView(TextView(context).apply { text = "GIF"; textSize = 16f })
             addView(bar)
-            message.text = "GIF search isn't configured.\n\nAdd a Tenor API key to " +
-                "GifPanelView.TENOR_API_KEY and rebuild. Tap ABC to go back."
+            message.text = "GIF search isn't configured.\n\nAdd your Tenor API key as " +
+                "tenor.api.key in local.properties (or the TENOR_API_KEY env var) and rebuild. " +
+                "Tap ABC to go back."
             message.gravity = Gravity.CENTER
             message.setPadding(context.dpInt(24f), context.dpInt(24f), context.dpInt(24f), 0)
             addView(message, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
@@ -91,6 +97,13 @@ class GifPanelView(context: Context) : LinearLayout(context) {
             grid.adapter = adapter
             grid.clipToPadding = false
             grid.setPadding(context.dpInt(6f), context.dpInt(6f), context.dpInt(6f), context.dpInt(6f))
+            grid.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                    val lm = rv.layoutManager as GridLayoutManager
+                    // Prefetch the next page as we approach the end (infinite scroll).
+                    if (lm.findLastVisibleItemPosition() >= results.size - 4) loadMore(reset = false)
+                }
+            })
             addView(grid, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
 
             selectCategory(0, "")
@@ -107,18 +120,34 @@ class GifPanelView(context: Context) : LinearLayout(context) {
 
     private fun selectCategory(index: Int, term: String) {
         chipViews.forEachIndexed { i, tv -> tv.setTextColor(if (i == index) theme.accent else theme.keyText) }
-        loadGifs(term)
+        currentTerm = term
+        nextPos = null
+        loading = false
+        results.clear()
+        adapter.notifyDataSetChanged()
+        loadMore(reset = true)
     }
 
-    private fun loadGifs(term: String) {
+    /** Load the first (reset=true) or next page; appends results and tracks the cursor. */
+    private fun loadMore(reset: Boolean) {
         val t = tenor ?: return
+        if (loading) return
+        if (!reset && nextPos == null) return   // no further pages
+        loading = true
+        val term = currentTerm
+        val pos = if (reset) null else nextPos
         Thread {
-            val list = runCatching { if (term.isEmpty()) t.trending() else t.search(term) }
-                .getOrDefault(emptyList())
+            val page = runCatching {
+                if (term.isEmpty()) t.trending(pos = pos) else t.search(term, pos = pos)
+            }.getOrNull()
             grid.post {
-                results.clear()
-                results.addAll(list)
-                adapter.notifyDataSetChanged()
+                loading = false
+                if (page != null) {
+                    val start = results.size
+                    results.addAll(page.gifs)
+                    nextPos = page.next
+                    adapter.notifyItemRangeInserted(start, page.gifs.size)
+                }
             }
         }.start()
     }

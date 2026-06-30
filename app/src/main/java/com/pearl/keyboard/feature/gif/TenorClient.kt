@@ -6,27 +6,39 @@ import java.net.URLEncoder
 import java.net.URL
 
 /**
- * Minimal Tenor v2 client (#6). Returns preview (tinygif) + full (gif) URLs.
- * Requires an API key in [GifPanelView.TENOR_API_KEY]; with no key the panel never
- * constructs this and simply shows setup instructions.
+ * Tenor v2 client (#6). Implements search, trending (featured), categories and cursor
+ * pagination per the official API. The key is injected (never hardcoded) — see
+ * BuildConfig.TENOR_API_KEY / GifPanelView.
  *
- * Network calls are blocking — always invoke from a background thread.
+ * All calls are blocking — invoke from a background thread. A [Page] carries the next
+ * cursor for infinite scroll.
  */
 class TenorClient(private val apiKey: String) {
 
     data class Gif(val previewUrl: String, val fullUrl: String, val description: String)
+    data class Page(val gifs: List<Gif>, val next: String?)
 
-    fun search(query: String, limit: Int = 24): List<Gif> =
-        request("search", "&q=" + URLEncoder.encode(query, "UTF-8"), limit)
+    fun search(query: String, limit: Int = 24, pos: String? = null): Page =
+        request("search", "&q=" + URLEncoder.encode(query, "UTF-8"), limit, pos)
 
-    fun trending(limit: Int = 24): List<Gif> = request("featured", "", limit)
+    fun trending(limit: Int = 24, pos: String? = null): Page =
+        request("featured", "", limit, pos)
 
-    private fun request(endpoint: String, extra: String, limit: Int): List<Gif> {
+    /** Tenor's suggested category search-terms (e.g. "excited", "#love"). */
+    fun categories(): List<String> = runCatching {
+        val url = "https://tenor.googleapis.com/v2/categories?key=$apiKey&client_key=pearl_keyboard"
+        val tags = JSONObject(httpGet(url)).optJSONArray("tags") ?: return@runCatching emptyList()
+        (0 until tags.length()).mapNotNull { tags.getJSONObject(it).optString("searchterm").ifEmpty { null } }
+    }.getOrDefault(emptyList())
+
+    private fun request(endpoint: String, extra: String, limit: Int, pos: String?): Page {
         val url = "https://tenor.googleapis.com/v2/$endpoint" +
             "?key=$apiKey&client_key=pearl_keyboard&limit=$limit" +
-            "&media_filter=tinygif,gif&contentfilter=medium$extra"
-        val json = httpGet(url)
-        val results = JSONObject(json).optJSONArray("results") ?: return emptyList()
+            "&media_filter=tinygif,gif&contentfilter=medium$extra" +
+            (if (pos != null) "&pos=$pos" else "")
+
+        val obj = JSONObject(httpGet(url))
+        val results = obj.optJSONArray("results") ?: return Page(emptyList(), null)
         val out = ArrayList<Gif>(results.length())
         for (i in 0 until results.length()) {
             val r = results.getJSONObject(i)
@@ -36,7 +48,8 @@ class TenorClient(private val apiKey: String) {
             val full = mf.optJSONObject("gif")?.optString("url").orEmpty().ifEmpty { preview }
             out.add(Gif(preview, full, r.optString("content_description")))
         }
-        return out
+        val next = obj.optString("next").ifEmpty { null }
+        return Page(out, next)
     }
 
     private fun httpGet(urlStr: String): String {
