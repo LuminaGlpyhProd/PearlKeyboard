@@ -18,7 +18,6 @@ import android.util.AttributeSet
 import android.util.SparseArray
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import com.pearl.keyboard.model.Key
 import com.pearl.keyboard.model.KeyIcon
 import com.pearl.keyboard.model.KeyType
@@ -29,6 +28,7 @@ import com.pearl.keyboard.theme.KeyboardTheme
 import com.pearl.keyboard.util.dp
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 enum class OneHandedSide { LEFT, RIGHT }
 
@@ -129,7 +129,12 @@ class KeyboardView @JvmOverloads constructor(
     private var gestureMaybe = false
     private val gestureStart = PointF()
     private val gesturePoints = ArrayList<PointF>()
-    private val gestureSlop = ViewConfiguration.get(context).scaledTouchSlop * 1.6f
+    private var gestureStartTime = 0L
+
+    // Swipe-activation gating (configurable) so rapid taps never trigger glide typing (#1).
+    var gestureMinDistancePx = context.dp(26f)   // must travel at least this far to start a swipe
+    var gestureMinSpeedPxPerMs = 0.32f           // …and be moving at least this fast
+    var gestureMaxStartDelayMs = 280L            // …within this long of touch-down
 
     private var lastShiftTap = 0L
     private var lastGesturePreview = 0L
@@ -310,6 +315,10 @@ class KeyboardView @JvmOverloads constructor(
         }
         return if (nearestDistSq <= proximityLimitSq) nearest else null
     }
+
+    /** Strict hit-test: only a key whose rect actually contains the point (no proximity). */
+    private fun directKeyAt(x: Float, y: Float): PositionedKey? =
+        positioned.firstOrNull { !it.key.isSpacer && it.rect.contains(x, y) }
 
     // ======================================================================
     // Drawing
@@ -542,6 +551,7 @@ class KeyboardView @JvmOverloads constructor(
                 if (gestureEnabled && pointerKeys.size() == 1 && layout.id == LayoutId.LETTERS) {
                     gestureCandidateId = id
                     gestureStart.set(x, y)
+                    gestureStartTime = SystemClock.uptimeMillis()
                     gestureMaybe = true
                 }
             }
@@ -571,19 +581,29 @@ class KeyboardView @JvmOverloads constructor(
         }
         val pk = pointerKeys.get(id) ?: return
 
-        // Promote to a glide gesture if the finger travels far enough from a letter key.
+        // Promote to a glide gesture ONLY for a deliberate move: far enough, fast enough,
+        // and soon enough after touch-down — so rapid tap-typing is never mistaken for a
+        // swipe (#1).
         if (gestureMaybe && id == gestureCandidateId && layout.id == LayoutId.LETTERS) {
             val dx = x - gestureStart.x
             val dy = y - gestureStart.y
-            if (dx * dx + dy * dy > gestureSlop * gestureSlop) {
-                beginGesture(id)
-                return
+            val distSq = dx * dx + dy * dy
+            if (distSq > gestureMinDistancePx * gestureMinDistancePx) {
+                val elapsed = (SystemClock.uptimeMillis() - gestureStartTime).coerceAtLeast(1L)
+                val speed = sqrt(distSq.toDouble()) / elapsed
+                if (elapsed <= gestureMaxStartDelayMs && speed >= gestureMinSpeedPxPerMs) {
+                    beginGesture(id)
+                    return
+                }
+                gestureMaybe = false // moved far but too slow/late — treat as a tap, not a swipe
             }
         }
 
-        // Slide to an adjacent letter to correct aim (iOS lets you do this).
+        // Slide to an adjacent letter to correct aim. Use a DIRECT hit (finger firmly over
+        // the other key), not proximity, so a fast tap that drifts toward a gap doesn't
+        // commit a neighbouring key (#5).
         if (pk.key.type == KeyType.CHAR) {
-            val nk = keyAt(x, y)
+            val nk = directKeyAt(x, y)
             if (nk != null && nk !== pk && nk.key.type == KeyType.CHAR) {
                 pressedKeys.remove(pk)
                 pointerKeys.put(id, nk)
