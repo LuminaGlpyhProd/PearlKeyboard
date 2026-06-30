@@ -43,11 +43,21 @@ android {
 
     signingConfigs {
         create("release") {
+            // Prefer an externally-supplied keystore (CI secret / env) for PRIVATE signing.
+            // Otherwise fall back to the committed key so sideloaded GitHub-release updates
+            // "just work": every release then shares ONE certificate, which Android requires
+            // to apply an in-place update. Swap to your own private keystore (secrets) for
+            // real/Play distribution — see README → Publishing.
             if (releaseStoreFile != null) {
                 storeFile = file(releaseStoreFile)
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
+            } else {
+                storeFile = file("pearl-release.jks")
+                storePassword = "pearlkeyboard"
+                keyAlias = "pearl"
+                keyPassword = "pearlkeyboard"
             }
         }
     }
@@ -63,10 +73,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Use the release signing config only when a keystore was provided.
-            if (releaseStoreFile != null) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            // Always sign the release build (committed key by default) so the published
+            // APK installs AND can be updated in place across versions.
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"

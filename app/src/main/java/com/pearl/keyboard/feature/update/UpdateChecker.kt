@@ -106,8 +106,12 @@ object UpdateChecker {
             val a = assets.getJSONObject(i)
             val name = a.optString("name")
             val u = a.optString("browser_download_url")
-            if (name == "app-debug.apk") return u            // prefer the installable debug APK
-            if (name.endsWith(".apk") && fallback == null) fallback = u
+            if (!name.endsWith(".apk", ignoreCase = true)) continue
+            // Prefer the signed RELEASE apk — it shares the installed app's package id and
+            // certificate, so Android applies it as an in-place update. Skip debug/unsigned
+            // variants (different/ephemeral signatures would be rejected as a conflict).
+            if (!name.contains("debug", true) && !name.contains("unsigned", true)) return u
+            if (fallback == null) fallback = u
         }
         return fallback
     }
