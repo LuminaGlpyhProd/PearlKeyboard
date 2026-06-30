@@ -37,7 +37,8 @@ class SuggestionStripView @JvmOverloads constructor(
     private var theme: KeyboardTheme = KeyboardTheme.light(false)
     private var suggestions: List<String> = emptyList()
     private var highlightIndex = -1
-    private val toolbar = listOf(Toolbar.EMOJI, Toolbar.GIF, Toolbar.CLIPBOARD, Toolbar.VOICE, Toolbar.SETTINGS)
+    // Emoji intentionally omitted here — the bottom row already has an emoji key (#8).
+    private val toolbar = listOf(Toolbar.GIF, Toolbar.CLIPBOARD, Toolbar.VOICE, Toolbar.SETTINGS)
 
     private val stripHeight = context.resources.getDimension(R.dimen.suggestion_strip_height)
     private val textSize = context.resources.getDimension(R.dimen.suggestion_text_size)
