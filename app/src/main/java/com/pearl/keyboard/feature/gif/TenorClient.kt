@@ -27,7 +27,7 @@ class TenorClient(private val apiKey: String) {
     /** Tenor's suggested category search-terms (e.g. "excited", "#love"). */
     fun categories(): List<String> = runCatching {
         val url = "https://tenor.googleapis.com/v2/categories?key=$apiKey&client_key=pearl_keyboard"
-        val tags = JSONObject(httpGet(url)).optJSONArray("tags") ?: return@runCatching emptyList()
+        val tags = JSONObject(httpGet(url)).optJSONArray("tags") ?: return@runCatching emptyList<String>()
         (0 until tags.length()).mapNotNull { tags.getJSONObject(it).optString("searchterm").ifEmpty { null } }
     }.getOrDefault(emptyList())
 
