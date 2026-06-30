@@ -76,6 +76,8 @@ class IosKeyboardService : InputMethodService(),
     private val composing = StringBuilder()
     private var lastSpaceTime = 0L
     private var lastAutoCorrection: String? = null
+    private var selStart = 0
+    private var selEnd = 0
 
     private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
 
@@ -119,6 +121,7 @@ class IosKeyboardService : InputMethodService(),
             setLayout(LayoutId.LETTERS)
         }
         haptic.enabled = prefs.haptics
+        haptic.strength = prefs.hapticStrength
         sound.enabled = prefs.sound
         sound.volume = prefs.soundVolume
         sound.pack = prefs.soundPack
@@ -142,6 +145,8 @@ class IosKeyboardService : InputMethodService(),
         candidatesStart: Int, candidatesEnd: Int
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        selStart = newSelStart
+        selEnd = newSelEnd
         // If our composing region was dropped (user moved the caret / tapped elsewhere),
         // forget the in-progress word so we don't corrupt later edits.
         if (composing.isNotEmpty() && candidatesStart == -1) {
@@ -264,6 +269,14 @@ class IosKeyboardService : InputMethodService(),
 
     private fun onDelete() {
         val ic = currentInputConnection ?: return
+        // A non-empty selection (e.g. Select All) is removed wholesale on the first delete (#7).
+        if (composing.isEmpty() && selEnd > selStart) {
+            ic.commitText("", 1)
+            selEnd = selStart            // collapse optimistically so repeat ticks delete normally
+            haptic.perform(KeyType.DELETE)
+            sound.play(KeyType.DELETE)
+            return
+        }
         val deleted: Boolean
         if (composing.isNotEmpty()) {
             composing.setLength(composing.length - 1)
