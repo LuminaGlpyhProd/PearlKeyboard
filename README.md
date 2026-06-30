@@ -58,13 +58,16 @@ accent bar, light/dark palettes, the blue action key, and the typing rhythm.
 | Predictive text · autocorrect · learned words | ✅ Implemented | Bundled word list + edit-distance |
 | Emoji keyboard + recents | ✅ Implemented | Categories, grid, `emoji2` |
 | Clipboard history | ✅ Implemented | Auto-captured, tap to paste, long-press delete |
-| Haptics · keypress sounds | ✅ Implemented | Predefined ticks; system FX + drop-in samples |
+| Haptics · keypress sounds | ✅ Implemented | Predefined haptic ticks; **original synthesized** sound pack (7 voices incl. Silent), no system FX; `res/raw` overrides |
 | Themes (light/dark/system) · one-handed mode · settings | ✅ Implemented | |
+| Theme presets + custom background engine | ✅ Implemented | 8 presets; background image w/ blur·brightness·dim, key translucency, accent; live editor |
+| In-app updater | ✅ Implemented | Checks GitHub Releases, prompts, installs via FileProvider |
+| Autofill / OTP inline suggestions | ✅ Implemented | InlineSuggestions API (Android 11+), fully guarded |
+| GIF search | ✅ Implemented | Tenor trending/search/categories, cursor pagination, animated previews, rich-content insert — set an API key |
 | Multilingual typing | 🟡 Simplified | Layouts are data-driven; ships **English** |
-| Glide / swipe typing | 🟡 Simplified | Real path capture + a lightweight decoder |
+| Glide / swipe typing | 🟡 Improved | Path capture + decoder; ~1.3k-word dictionary, nearest-2 endpoints, auto-insert on lift + live top-3 |
 | Voice typing | 🟡 Simplified | Platform `SpeechRecognizer` + permission shim |
 | Spell checking | 🟡 Simplified | Folded into autocorrect |
-| GIF search | 🟧 Scaffold | UI + Tenor API-key hook (you add key + network code) |
 | Floating keyboard | ❌ Not yet | See roadmap |
 
 ✅ done · 🟡 working but simplified · 🟧 stub with clear TODO · ❌ not started
